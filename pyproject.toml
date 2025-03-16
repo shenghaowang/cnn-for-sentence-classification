@@ -1,0 +1,20 @@
+[tool.interrogate]
+# https://interrogate.readthedocs.io/en/latest/#command-line-options
+verbose = 2
+quiet = false
+fail-under = 100
+exclude = ["**/test_*.py", "**/conftest.py"]
+ignore-init-method = false
+ignore-init-module = true
+ignore-magic = false
+ignore-module = true
+ignore-nested-functions = false
+ignore-nested-classes = false
+ignore-private = false
+ignore-property-decorators = false
+ignore-setters = false
+ignore-semiprivate = false
+ignore-regex = ["main"]
+whitelist-regex = []
+color = true
+omit-covered-files = true
