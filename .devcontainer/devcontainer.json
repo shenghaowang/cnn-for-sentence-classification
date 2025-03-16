@@ -19,7 +19,7 @@
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": "apt-get update && git config --global --add safe.directory /workspaces/cnn-for-sentence-classification \
-		&& pre-commit install && python -m spacy download en_core_web_md zh_core_web_md"
+		&& pre-commit install && python -m spacy download en_core_web_md && python -m spacy download zh_core_web_md"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
