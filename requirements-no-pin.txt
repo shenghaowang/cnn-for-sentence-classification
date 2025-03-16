@@ -1,0 +1,17 @@
+blis>=0.7.11
+thinc>=8.1.12
+hydra-core
+loguru
+matplotlib
+nltk
+numpy
+omegaconf
+pandas
+pytorch-lightning
+pre-commit
+pytest
+scikit-learn
+spacy
+stopwordsiso
+torchsummary
+torchvision
