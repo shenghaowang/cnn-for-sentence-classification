@@ -1,6 +1,6 @@
 data/processed/
 outputs/
-model/
+# model/
 lightning_logs/
 
 # Byte-compiled / optimized / DLL files
