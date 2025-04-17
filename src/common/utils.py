@@ -7,7 +7,7 @@ from loguru import logger
 from sklearn.metrics import f1_score
 from torch.nn.utils.rnn import pad_sequence
 
-from cold_data import ColdDataset, ColdVectorizer
+from data.cold_data import ColdDataset, ColdVectorizer
 
 
 @dataclass
