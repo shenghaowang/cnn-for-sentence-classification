@@ -5,7 +5,7 @@ from loguru import logger
 from omegaconf import DictConfig
 
 import hydra
-from cold_data import ColdDataModule, ColdVectorizer, load_data
+from data.cold import ColdDataModule, ColdVectorizer, load_data
 
 MAX_EPOCHS = 1
 

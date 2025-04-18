@@ -1,0 +1,13 @@
+name: trec
+
+rm_stopwords: True
+raw:
+  train: ${data_dir}/train.csv
+  test: ${data_dir}/test.csv
+fields:
+  raw_text: text
+  processed_text: processed_text
+  seq_len: len
+  label: label-coarse
+
+type: text_label

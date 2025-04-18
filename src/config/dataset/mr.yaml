@@ -1,0 +1,13 @@
+name: mr
+
+rm_stopwords: True
+raw:
+  pos: ${data_dir}/rt-polarity.pos
+  neg: ${data_dir}/rt-polarity.neg
+fields:
+  raw_text: text
+  processed_text: processed_text
+  seq_len: len
+  label: label
+
+type: pos_neg

@@ -65,7 +65,7 @@ class OffensiveLangDetector(pl.LightningModule):
             "logits": y_hat,
             "predictions": predictions,
             "label": batch["label"],
-            "comments": batch["comments"],
+            "texts": batch["texts"],
         }
 
     def configure_optimizers(self):
@@ -78,9 +78,9 @@ class OffensiveLangDetector(pl.LightningModule):
         print("\n")
 
 
-class ColdCNN(torch.nn.Module):
+class ConvNet(torch.nn.Module):
     def __init__(self, hyparams: DictConfig, in_channels: int, seq_len: int):
-        super(ColdCNN, self).__init__()
+        super(ConvNet, self).__init__()
 
         self.kernel_sizes = hyparams.kernel_sizes
 

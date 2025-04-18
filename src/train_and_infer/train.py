@@ -7,8 +7,8 @@ from loguru import logger
 from omegaconf import DictConfig
 
 import hydra
-from cold_cnn import ColdCNN, OffensiveLangDetector
-from cold_data import ColdDataModule, ColdVectorizer, load_data
+from data.cold import ColdDataModule, ColdVectorizer, load_data
+from model.cnn import ColdCNN, OffensiveLangDetector
 
 
 @hydra.main(version_base=None, config_path="hydra", config_name="config")

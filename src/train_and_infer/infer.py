@@ -6,9 +6,9 @@ from loguru import logger
 from omegaconf import DictConfig
 
 import hydra
-from cold_cnn import ColdCNN, OffensiveLangDetector
-from cold_data import ColdDataset, ColdVectorizer, load_data
-from utils import Cols, create_tensors_from_dataset, generate_skip_gram_comments
+from common.utils import Cols, create_tensors_from_dataset, generate_skip_gram_comments
+from data.cold import ColdDataset, ColdVectorizer, load_data
+from model.cnn import ColdCNN, OffensiveLangDetector
 
 SAMPLE_SIZE = 3
 
