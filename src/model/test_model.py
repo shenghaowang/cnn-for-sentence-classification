@@ -4,7 +4,7 @@ from omegaconf import DictConfig
 from torchsummary import summary
 
 import hydra
-from data.cold_data import ColdDataModule, ColdVectorizer, load_data
+from data.cold import ColdDataModule, ColdVectorizer, load_data
 from model.cold_cnn import ColdCNN
 
 
