@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 
 import hydra
 from data.cold import ColdDataModule, ColdVectorizer, load_data
-from model.cold_cnn import ColdCNN, OffensiveLangDetector
+from model.cnn import ColdCNN, OffensiveLangDetector
 
 
 @hydra.main(version_base=None, config_path="hydra", config_name="config")

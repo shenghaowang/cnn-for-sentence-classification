@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 import hydra
 from common.utils import Cols, create_tensors_from_dataset, generate_skip_gram_comments
 from data.cold import ColdDataset, ColdVectorizer, load_data
-from model.cold_cnn import ColdCNN, OffensiveLangDetector
+from model.cnn import ColdCNN, OffensiveLangDetector
 
 SAMPLE_SIZE = 3
 

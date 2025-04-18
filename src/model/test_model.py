@@ -5,7 +5,7 @@ from torchsummary import summary
 
 import hydra
 from data.cold import ColdDataModule, ColdVectorizer, load_data
-from model.cold_cnn import ColdCNN
+from model.cnn import ColdCNN
 
 
 @hydra.main(version_base=None, config_path="hydra", config_name="config")
