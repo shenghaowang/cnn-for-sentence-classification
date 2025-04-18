@@ -1,8 +1,10 @@
 import re
 from dataclasses import dataclass
+from enum import Enum
 
 import cleantext
 import pandas as pd
+from omegaconf import DictConfig
 from stopwordsiso import stopwords
 
 
@@ -12,6 +14,58 @@ class Cols:
     processed_text: str
     seq_len: str
     label: str
+
+
+class DataType(Enum):
+    TEXT_LABEL = "text_label"
+    POS_NEG = "pos_neg"
+
+
+def read_text_label_data(raw_datadir: DictConfig) -> pd.DataFrame:
+    """Read the text and label data from a CSV file.
+
+    Parameters
+    ----------
+    raw_datadir : DictConfig
+        Path to the CSV files containing the text and label data.
+
+    Returns
+    -------
+    pd.DataFrame
+        Merged dataframe containing the text and label data.
+    """
+    return pd.concat([pd.read_csv(data) for data in raw_datadir.values()])
+
+
+def read_pos_neg_data(raw_datadir: DictConfig, cols: Cols) -> pd.DataFrame:
+    """Read the positive and negative data from CSV files.
+
+    Parameters
+    ----------
+    raw_datadir : DictConfig
+        Path to the CSV files containing the positive and negative data,
+        with the positive data in `pos` and negative data in `neg`.
+    cols : Cols
+        Column names for the text and label data.
+
+    Returns
+    -------
+    pd.DataFrame
+        Merged dataframe containing the positive and negative data.
+    """
+    with open(raw_datadir.pos, encoding="ISO-8859-1") as f:
+        lines = [line.strip() for line in f]
+
+    pos_df = pd.DataFrame(lines, columns=[cols.raw_text])
+    pos_df[cols.label] = 1
+
+    with open(raw_datadir.neg, encoding="ISO-8859-1") as f:
+        lines = [line.strip() for line in f]
+
+    neg_df = pd.DataFrame(lines, columns=[cols.raw_text])
+    neg_df[cols.label] = 0
+
+    return pd.concat([pos_df, neg_df], ignore_index=True)
 
 
 def clean_en(text: str, rm_stops: bool = False) -> str:

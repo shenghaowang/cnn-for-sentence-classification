@@ -3,12 +3,17 @@ from pathlib import Path
 
 import hydra
 import numpy as np
-import pandas as pd
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 from sklearn.model_selection import train_test_split
 
-from preprocess.utils import Cols, write_processed_data
+from preprocess.utils import (
+    Cols,
+    DataType,
+    read_pos_neg_data,
+    read_text_label_data,
+    write_processed_data,
+)
 
 
 @hydra.main(version_base=None, config_path="../config", config_name="config")
@@ -20,14 +25,21 @@ def main(cfg: DictConfig) -> None:
     rm_stops = cfg.dataset.rm_stopwords
     cols = Cols(**cfg.dataset.fields)
 
-    df = pd.read_csv(raw_data.train)
-    logger.info(f"Training data: {df.shape}")
+    # Read the raw data
+    if cfg.dataset.type == DataType.TEXT_LABEL.value:
+        df = read_text_label_data(raw_data)
+
+    elif cfg.dataset.type == DataType.POS_NEG.value:
+        df = read_pos_neg_data(raw_data, cols)
+
+    else:
+        raise ValueError(f"Unknown dataset type: {cfg.dataset.type}")
+
+    logger.info(f"Raw data: {df.shape}")
     logger.debug(f"\n{df.head()}")
 
     # Check the class distribution
-    logger.info(
-        f"Class distribution of the training data:\n{df[cols.label].value_counts()}"
-    )
+    logger.info(f"Class distribution of the raw data:\n{df[cols.label].value_counts()}")
 
     # Check the length of texts in number of words
     df[cols.seq_len] = df[cols.raw_text].apply(lambda text: len(text.split()))
@@ -54,12 +66,16 @@ def main(cfg: DictConfig) -> None:
     output_dir = Path(processed_data.train).parent
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # To reduce the chance of data drift, combine the raw datasets
-    # and resplit for training, validation, and test
-    combined_df = pd.concat([pd.read_csv(data) for data in cfg.dataset.raw.values()])
-    combined_df[cols.processed_text] = combined_df[cols.raw_text].apply(clean_text_func)
-    train_df, rest_df = train_test_split(combined_df, test_size=0.3, random_state=42)
-    val_df, test_df = train_test_split(rest_df, test_size=0.5, random_state=42)
+    # Clean the text data
+    df[cols.processed_text] = df[cols.raw_text].apply(clean_text_func)
+
+    # Split the merged data for training, validation, and test
+    train_df, rest_df = train_test_split(
+        df, test_size=0.3, stratify=df[cols.label], random_state=42
+    )
+    val_df, test_df = train_test_split(
+        rest_df, test_size=0.5, stratify=rest_df[cols.label], random_state=42
+    )
 
     logger.info(f"Volume of training data: {len(train_df)}")
     logger.info(f"Volume of dev data: {len(val_df)}")
