@@ -1,13 +1,13 @@
 import importlib
 from pathlib import Path
 
+import hydra
 import numpy as np
 import pandas as pd
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 from sklearn.model_selection import train_test_split
 
-import hydra
 from preprocess.utils import Cols, write_processed_data
 
 
@@ -29,8 +29,8 @@ def main(cfg: DictConfig) -> None:
         f"Class distribution of the training data:\n{df[cols.label].value_counts()}"
     )
 
-    # Check the length of the texts
-    df[cols.seq_len] = df[cols.raw_text].apply(len)
+    # Check the length of texts in number of words
+    df[cols.seq_len] = df[cols.raw_text].apply(lambda text: len(text.split()))
     logger.info(f"Length of texts:\n{df['len'].describe()}")
 
     for percentile in [50, 75, 95]:
