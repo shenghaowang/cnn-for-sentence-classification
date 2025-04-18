@@ -2,6 +2,7 @@ data/processed/
 outputs/
 # model/
 lightning_logs/
+data/**/processed_*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
