@@ -1,0 +1,16 @@
+defaults:
+  - dataset: trec
+  - model: cnn
+
+data_dir: data/${dataset.name}
+dataset:
+  rm_stopwords: False
+  processed:
+    train: ${data_dir}/processed_train.csv
+    val: ${data_dir}/processed_val.csv
+    test: ${data_dir}/processed_test.csv
+
+lang: en
+clean_text_func: clean_${lang}
+
+model_file: model/${dataset.name}_${model.name}.model
