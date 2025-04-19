@@ -41,6 +41,8 @@ class TextClassifier(pl.LightningModule):
             y = y.long()
             predictions = torch.argmax(logits, dim=1)
 
+        # print(f"logits: {logits.shape}")
+        # print(f"targets: {y.shape}")
         loss = self.loss_fn(logits, y)
 
         # Set constraint on the model params of
@@ -54,14 +56,6 @@ class TextClassifier(pl.LightningModule):
         acc = (predictions == y).float().mean()
         # f1 = self.f1(predictions, batch["label"])
 
-        # # Logging
-        # self.log_dict(
-        #     {
-        #         f"{stage}_loss": loss,
-        #         f"{stage}_acc": self.f1(predictions, batch["label"]),
-        #     },
-        #     prog_bar=True,
-        # )
         return total_loss, acc
 
     def training_step(self, batch, batch_idx):
@@ -117,7 +111,23 @@ class TextClassifier(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        return optimizer
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode="min",  # because we want to minimize val_loss
+            factor=0.5,  # reduce LR by half
+            patience=2,  # wait 2 epochs with no improvement
+            verbose=True,
+        )
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val_loss",  # name must match what you log
+                "interval": "epoch",
+                "frequency": 1,
+            },
+        }
 
     def on_epoch_start(self):
         """Create a new progress bar for each epoch"""
