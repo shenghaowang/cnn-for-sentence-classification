@@ -1,42 +1,19 @@
 import importlib
+from pathlib import Path
 from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 import torch
+from loguru import logger
+from omegaconf import DictConfig
 
 # from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset
 
-
-def load_data(data_file: str, X_col: str, y_col: str) -> List[Tuple[str, int]]:
-    """Load texts and labels
-
-    Parameters
-    ----------
-    data_file : str
-        directory of the data file
-    X_col : str
-        name of the text column
-    y_col : str
-        name of the label column
-
-    Returns
-    -------
-    List[Tuple[str, int]]
-        list of loaded texts and labels
-    """
-    df = pd.read_csv(data_file)
-    X = df[X_col].to_numpy()
-    y = df[y_col].to_numpy()
-
-    data = []
-    for idx, text in enumerate(X):
-        data.append((text, y[idx]))
-
-    return data
+from preprocess.utils import Cols
 
 
 class TextVectorizer:
@@ -87,7 +64,7 @@ class TextDataset(Dataset):
     Reference: https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
     """
 
-    def __init__(self, data, vectorizer):
+    def __init__(self, data: List[Tuple[str, int]], vectorizer: TextVectorizer):
         self.dataset = data
         self.vectorizer = vectorizer
 
@@ -110,18 +87,51 @@ class TextDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        vectorizer,
-        batch_size,
-        max_seq_len,
-        train_data: List[Tuple],
-        valid_data: List[Tuple],
-        test_data: List[Tuple],
+        batch_size: int,
+        max_seq_len: int,
+        processed_data_dir: DictConfig,
+        cols: Cols,
     ):
         super().__init__()
         self.batch_size = batch_size
         self.max_seq_len = max_seq_len
+        self.processed_data_dir = processed_data_dir
+        self.cols = cols
+
+    def load_data(self, data_file: Path) -> List[Tuple[str, int]]:
+        """Load texts and labels
+
+        Parameters
+        ----------
+        data_file : Path
+            directory of the data file
+
+        Returns
+        -------
+        List[Tuple[str, int]]
+            list of loaded texts and labels
+        """
+        df = pd.read_csv(data_file)
+        X = df[self.cols.processed_text].to_numpy()
+        y = df[self.cols.label].to_numpy()
+
+        data = []
+        for idx, text in enumerate(X):
+            data.append((text, y[idx]))
+
+        return data
+
+    def setup(self, vectorizer: TextVectorizer):
+        train_data = self.load_data(self.processed_data_dir.train)
+        val_data = self.load_data(self.processed_data_dir.val)
+        test_data = self.load_data(self.processed_data_dir.test)
+
+        logger.debug(f"Volume of training data: {len(train_data)}")
+        logger.debug(f"Volume of validation data: {len(val_data)}")
+        logger.debug(f"Volume of test data: {len(test_data)}")
+
         self.train_ds = TextDataset(train_data, vectorizer)
-        self.valid_ds = TextDataset(valid_data, vectorizer)
+        self.val_ds = TextDataset(val_data, vectorizer)
         self.test_ds = TextDataset(test_data, vectorizer)
 
     def collate_fn(self, batch):
@@ -161,7 +171,7 @@ class TextDataModule(pl.LightningDataModule):
 
     def val_dataloader(self):
         return DataLoader(
-            self.valid_ds,
+            self.val_ds,
             batch_size=self.batch_size,
             collate_fn=self.collate_fn,
         )
