@@ -13,4 +13,5 @@ dataset:
 lang: en
 clean_text_func: clean_${lang}
 
+word2vec_path: data/GoogleNews-vectors-negative300.bin
 model_file: model/${dataset.name}_${model.name}.model
