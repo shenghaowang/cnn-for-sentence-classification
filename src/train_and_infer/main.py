@@ -6,8 +6,10 @@ import torch
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 
-from data.text_data import TextDataModule, TextVectorizer
+from data.text_data import TextDataModule
 from model.cnn import ConvNet
+from model.lstm import LSTM
+from model.model_type import ModelType
 from model.text_classifier import TextClassifier
 from preprocess.utils import Cols
 from train_and_infer.metrics_logger import MetricsLogger
@@ -20,24 +22,37 @@ def main(cfg: DictConfig):
 
     torch.manual_seed(seed=42)
 
-    # Initialize our data loader with the passed vectorizer
+    # Init data module
     dm = TextDataModule(
         batch_size=train_cfg.batch_size,
         max_seq_len=train_cfg.max_seq_len,
         processed_data_dir=cfg.dataset.processed,
         cols=Cols(**cfg.dataset.fields),
     )
-    dm.setup(vectorizer=TextVectorizer())
+    dm.setup(word2vec_path=cfg.word2vec_path)
 
-    # Initialise text classification model
-    model = ConvNet(
-        hyparams=cfg.model.hyperparams,
-        in_channels=train_cfg.word_vec_dim,
-        seq_len=train_cfg.max_seq_len,
-        output_dim=train_cfg.num_classes if train_cfg.num_classes > 2 else 1,
-    )
+    # Init neural network
+    hyperparams = cfg.model.hyperparams
+    if cfg.model.name == ModelType.CNN.value:
+        model = ConvNet(
+            hyparams=hyperparams,
+            in_channels=train_cfg.word_vec_dim,
+            seq_len=train_cfg.max_seq_len,
+            output_dim=train_cfg.num_classes if train_cfg.num_classes > 2 else 1,
+        )
 
-    # Create a pytorch trainer
+    elif cfg.model.name == ModelType.LSTM.value:
+        model = LSTM(
+            input_dim=hyperparams.input_dim,
+            hidden_dim=hyperparams.hidden_dim,
+            num_layers=hyperparams.num_layers,
+            output_dim=train_cfg.num_classes if train_cfg.num_classes > 2 else 1,
+        )
+
+    else:
+        raise ValueError(f"Unknown model type: {cfg.model.name}")
+
+    # Create trainer
     metrics_logger = MetricsLogger()
     trainer = pl.Trainer(
         max_epochs=cfg.model.hyperparams.max_epochs,
@@ -45,7 +60,7 @@ def main(cfg: DictConfig):
         # check_val_every_n_epoch=1
     )
 
-    # Instantiate a new model
+    # Init text classifier
     classifier = TextClassifier(
         model,
         num_class=train_cfg.num_classes,
