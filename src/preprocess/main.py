@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 from preprocess.utils import (
     Cols,
     DataType,
+    build_vocab,
     read_pos_neg_data,
     read_text_label_data,
     write_processed_data,
@@ -73,6 +74,12 @@ def main(cfg: DictConfig) -> None:
     df = df[
         df[cols.processed_text].notna() & df[cols.processed_text].str.strip().ne("")
     ]
+
+    # Build vocabulary
+    build_vocab(
+        texts=df[cols.processed_text].to_list(),
+        vocab_path=processed_data.vocab,
+    )
 
     # Split the merged data for training, validation, and test
     train_df, rest_df = train_test_split(

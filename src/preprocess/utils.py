@@ -1,9 +1,12 @@
 import re
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import List
 
 import cleantext
 import pandas as pd
+from loguru import logger
 from omegaconf import DictConfig
 from stopwordsiso import stopwords
 
@@ -145,3 +148,17 @@ def write_processed_data(df: pd.DataFrame, data_dir: str):
         local path for exporting the data
     """
     df.to_csv(data_dir, index=False)
+
+
+def build_vocab(texts: List[str], vocab_path: Path) -> None:
+    vocab = set()
+    for text in texts:
+        # Tokenize the text
+        tokens = text.split()  # or use nltk.word_tokenize(text)
+        vocab.update(tokens)
+
+    logger.info(f"Vocabulary size: {len(vocab)}")
+
+    with open(vocab_path, "w", encoding="utf-8") as f:
+        for word in vocab:
+            f.write(f"{word}\n")
