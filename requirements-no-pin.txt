@@ -1,6 +1,7 @@
-blis>=0.7.11
+# blis>=0.7.11
 cleantext
-thinc>=8.1.12
+gensim
+# thinc>=8.1.12
 hydra-core
 loguru
 matplotlib
@@ -12,7 +13,7 @@ pytorch-lightning
 pre-commit
 pytest
 scikit-learn
-spacy
+# spacy
 stopwordsiso
 torchsummary
 torchvision
