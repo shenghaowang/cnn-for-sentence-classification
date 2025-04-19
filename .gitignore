@@ -1,6 +1,7 @@
 data/processed/
 outputs/
-# model/
+model/
+!src/model
 lightning_logs/
 data/**/processed_*.csv
 
