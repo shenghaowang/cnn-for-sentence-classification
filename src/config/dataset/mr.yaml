@@ -10,4 +10,14 @@ fields:
   seq_len: len
   label: label
 
+num_classes: 2
 type: pos_neg
+
+model: en_core_web_md
+
+train:
+  # max_seq_len: 110
+  num_classes: 2
+  max_seq_len: 40
+  batch_size: 32
+  word_vec_dim: 300

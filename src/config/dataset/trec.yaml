@@ -11,3 +11,10 @@ fields:
   label: label-coarse
 
 type: text_label
+
+train:
+  # max_seq_len: 110
+  num_classes: 6
+  max_seq_len: 30
+  batch_size: 32
+  word_vec_dim: 300
