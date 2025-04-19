@@ -1,4 +1,3 @@
-import importlib
 from pathlib import Path
 from typing import List, Tuple
 
@@ -6,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 import torch
+from gensim.models import KeyedVectors
 from loguru import logger
 from omegaconf import DictConfig
 
@@ -16,67 +16,35 @@ from torch.utils.data import DataLoader, Dataset
 from preprocess.utils import Cols
 
 
-class TextVectorizer:
-    def __init__(self, model: str = "en_core_web_md"):
-        """Create word vectors from given comments"""
-        self.model = importlib.import_module(model).load()
-
-    def tokenize(self, text: str) -> List[str]:
-        """Tokenize a given sentence into a list of tokens
-
-        Parameters
-        ----------
-        text : str
-            sentence to tokenize
-
-        Returns
-        -------
-        List[str]
-            list of tokens generated from the sentence
-        """
-        doc = self.model.make_doc(text)
-        tokens = [token for token in doc]
-
-        return tokens
-
-    def vectorize(self, text: str) -> List[np.ndarray]:
-        """Given a sentence, tokenize it and returns a list of
-        pre-trained word vector for each token.
-
-        Parameters
-        ----------
-        text : str
-            sentence to tokenize
-
-        Returns
-        -------
-        List[np.ndarray]
-            list of pretrained word vectors
-        """
-        doc = self.model.make_doc(text)
-        word_vecs = [token.vector for token in doc]
-
-        return word_vecs
-
-
 class TextDataset(Dataset):
     """Creates an pytorch dataset to consume our pre-loaded text data
     Reference: https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
     """
 
-    def __init__(self, data: List[Tuple[str, int]], vectorizer: TextVectorizer):
+    def __init__(self, data: List[Tuple[str, int]], word2vec: KeyedVectors):
         self.dataset = data
-        self.vectorizer = vectorizer
+        self.word2vec = word2vec
+        self.embedding_dim = word2vec.vector_size
+        # self.vectorizer = vectorizer
 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, idx):
         text, label = self.dataset[idx]
-        word_vecs = self.vectorizer.vectorize(text)
+        # word_vecs = self.vectorizer.vectorize(text)
+
+        tokens = text.split()
+        vectors = []
+        for word in tokens:
+            if word in self.word2vec:
+                vec = torch.tensor(self.word2vec[word])
+            else:
+                vec = torch.zeros(self.embedding_dim)
+            vectors.append(vec)
 
         return {
-            "vectors": word_vecs,
+            "vectors": torch.stack(vectors),
             "label": label,
             "text": text,  # for debugging only
         }
@@ -121,7 +89,7 @@ class TextDataModule(pl.LightningDataModule):
 
         return data
 
-    def setup(self, vectorizer: TextVectorizer):
+    def setup(self, word2vec_path: Path):
         train_data = self.load_data(self.processed_data_dir.train)
         val_data = self.load_data(self.processed_data_dir.val)
         test_data = self.load_data(self.processed_data_dir.test)
@@ -130,9 +98,13 @@ class TextDataModule(pl.LightningDataModule):
         logger.debug(f"Volume of validation data: {len(val_data)}")
         logger.debug(f"Volume of test data: {len(test_data)}")
 
-        self.train_ds = TextDataset(train_data, vectorizer)
-        self.val_ds = TextDataset(val_data, vectorizer)
-        self.test_ds = TextDataset(test_data, vectorizer)
+        # Load word vectors
+        word2vec = KeyedVectors.load_word2vec_format(word2vec_path, binary=True)
+        # word2vec.init_sims(replace=True)
+
+        self.train_ds = TextDataset(train_data, word2vec)
+        self.val_ds = TextDataset(val_data, word2vec)
+        self.test_ds = TextDataset(test_data, word2vec)
 
     def collate_fn(self, batch):
         """Convert the input raw data from the dataset into model input"""
