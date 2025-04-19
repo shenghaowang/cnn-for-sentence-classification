@@ -1,10 +1,10 @@
+import importlib
 from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 import torch
-import zh_core_web_md
 
 # from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
@@ -40,9 +40,9 @@ def load_data(data_file: str, X_col: str, y_col: str) -> List[Tuple[str, int]]:
 
 
 class TextVectorizer:
-    def __init__(self):
+    def __init__(self, model: str = "en_core_web_md"):
         """Create word vectors from given comments"""
-        self.model = zh_core_web_md.load()
+        self.model = importlib.import_module(model).load()
 
     def tokenize(self, text: str) -> List[str]:
         """Tokenize a given sentence into a list of tokens
@@ -149,7 +149,7 @@ class TextDataModule(pl.LightningDataModule):
         return {
             "vectors": padded_word_vector,
             "label": labels,
-            "comments": [item["comment"] for item in batch],
+            "texts": [item["text"] for item in batch],
         }
 
     def train_dataloader(self):
