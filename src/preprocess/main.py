@@ -69,6 +69,11 @@ def main(cfg: DictConfig) -> None:
     # Clean the text data
     df[cols.processed_text] = df[cols.raw_text].apply(clean_text_func)
 
+    # Filter out empty texts
+    df = df[
+        df[cols.processed_text].notna() & df[cols.processed_text].str.strip().ne("")
+    ]
+
     # Split the merged data for training, validation, and test
     train_df, rest_df = train_test_split(
         df, test_size=0.3, stratify=df[cols.label], random_state=42
