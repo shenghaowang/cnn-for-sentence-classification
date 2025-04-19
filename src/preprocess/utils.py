@@ -1,8 +1,10 @@
 import re
+from collections import Counter
 from dataclasses import dataclass
 from enum import Enum
+from itertools import chain
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 import cleantext
 import pandas as pd
@@ -151,14 +153,28 @@ def write_processed_data(df: pd.DataFrame, data_dir: str):
 
 
 def build_vocab(texts: List[str], vocab_path: Path) -> None:
-    vocab = set()
-    for text in texts:
-        # Tokenize the text
-        tokens = text.split()  # or use nltk.word_tokenize(text)
-        vocab.update(tokens)
+    all_tokens = []
 
-    logger.info(f"Vocabulary size: {len(vocab)}")
+    for text in texts:
+        tokens = text.split()  # or use nltk.word_tokenize or spacy
+        all_tokens.append(tokens)
+
+    logger.info(f"Size of vocabulary: {len(all_tokens)}")
+
+    # Flatten and count
+    vocab = Counter(chain.from_iterable(all_tokens))
 
     with open(vocab_path, "w", encoding="utf-8") as f:
-        for word in vocab:
-            f.write(f"{word}\n")
+        for word, freq in vocab.items():
+            f.write(f"{word}\t{freq}\n")
+
+
+def load_vocab_with_freq(vocab_path: Path) -> Dict[str, int]:
+    """Load vocabulary with frequencies from a file."""
+
+    vocab = {}
+    with open(vocab_path, "r", encoding="utf-8") as f:
+        for line in f:
+            word, freq = line.strip().split("\t")
+            vocab[word] = int(freq)
+    return vocab
