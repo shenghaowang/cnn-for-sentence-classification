@@ -13,7 +13,6 @@ fields:
 type: text_label
 
 train:
-  # max_seq_len: 110
   num_classes: 6
   max_seq_len: 10
   batch_size: 50
