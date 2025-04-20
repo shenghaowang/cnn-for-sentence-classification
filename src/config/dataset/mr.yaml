@@ -10,11 +10,9 @@ fields:
   seq_len: len
   label: label
 
-num_classes: 2
 type: pos_neg
 
 train:
-  # max_seq_len: 110
   num_classes: 2
   max_seq_len: 20
   batch_size: 50
