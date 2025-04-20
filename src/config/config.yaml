@@ -11,8 +11,5 @@ dataset:
     test: ${data_dir}/processed_test.csv
     vocab: ${data_dir}/vocab.txt
 
-lang: en
-clean_text_func: clean_${lang}
-
 word2vec_path: data/GoogleNews-vectors-negative300.bin
 model_file: model/${dataset.name}_${model.name}.model
