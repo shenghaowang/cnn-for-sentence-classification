@@ -10,7 +10,6 @@ from typing import Dict, List
 import pandas as pd
 from loguru import logger
 from omegaconf import DictConfig
-from stopwordsiso import stopwords
 
 
 @dataclass
@@ -106,25 +105,6 @@ def clean_text(text: str, lowercase: bool = True) -> str:
     return text.strip().lower() if lowercase else text.strip()
 
 
-def rm_stopwords(text: str, stp_lang: str) -> str:
-    """Remove stopwords from the text
-
-    Parameters
-    ----------
-    text : str
-        original text
-    stp_lang : str
-        language code for stopword list,
-        e.g. "en" for English
-
-    Returns
-    -------
-    str
-        processed text with no stopword
-    """
-    return "".join([char for char in text if char not in stopwords(stp_lang)])
-
-
 def write_processed_data(df: pd.DataFrame, data_dir: str):
     """Write processed data to local disk
 
@@ -147,7 +127,7 @@ def build_vocab(texts: List[str], vocab_path: Path) -> None:
     all_tokens = []
 
     for text in texts:
-        tokens = text.split()  # or use nltk.word_tokenize or spacy
+        tokens = text.split()
         all_tokens.append(tokens)
 
     logger.info(f"Size of vocabulary: {len(all_tokens)}")
