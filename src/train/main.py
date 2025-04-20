@@ -6,7 +6,6 @@ import torch
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.callbacks import EarlyStopping
-from train_and_infer.metrics_logger import MetricsLogger
 
 from data.text_data import TextDataModule
 from model.cnn import ConvNet
@@ -14,6 +13,7 @@ from model.lstm import LSTM
 from model.model_type import ModelType
 from model.text_classifier import TextClassifier
 from preprocess.utils import Cols
+from train.metrics_logger import MetricsLogger
 
 
 @hydra.main(version_base=None, config_path="../config", config_name="config")
