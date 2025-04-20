@@ -5,6 +5,8 @@ import pytorch_lightning as pl
 import torch
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
+from pytorch_lightning.callbacks import EarlyStopping
+from train_and_infer.metrics_logger import MetricsLogger
 
 from data.text_data import TextDataModule
 from model.cnn import ConvNet
@@ -12,7 +14,6 @@ from model.lstm import LSTM
 from model.model_type import ModelType
 from model.text_classifier import TextClassifier
 from preprocess.utils import Cols
-from train_and_infer.metrics_logger import MetricsLogger
 
 
 @hydra.main(version_base=None, config_path="../config", config_name="config")
@@ -29,15 +30,15 @@ def main(cfg: DictConfig):
         processed_data_dir=cfg.dataset.processed,
         cols=Cols(**cfg.dataset.fields),
     )
-    dm.setup(word2vec_path=cfg.word2vec_path)
+    dm.setup(word2vec_path=cfg.word2vec_path, vocab_path=cfg.dataset.processed.vocab)
 
     # Init neural network
     hyperparams = cfg.model.hyperparams
     if cfg.model.name == ModelType.CNN.value:
         model = ConvNet(
-            hyparams=hyperparams,
-            in_channels=train_cfg.word_vec_dim,
-            seq_len=train_cfg.max_seq_len,
+            num_filters=hyperparams.num_filters,
+            kernel_sizes=hyperparams.kernel_sizes,
+            embedding_dim=hyperparams.embedding_dim,
             output_dim=train_cfg.num_classes if train_cfg.num_classes > 2 else 1,
         )
 
@@ -54,10 +55,12 @@ def main(cfg: DictConfig):
 
     # Create trainer
     metrics_logger = MetricsLogger()
+    early_stop_callback = EarlyStopping(
+        monitor="val_loss", min_delta=0.001, patience=3, verbose=True, mode="min"
+    )
     trainer = pl.Trainer(
         max_epochs=cfg.model.hyperparams.max_epochs,
-        callbacks=[metrics_logger]
-        # check_val_every_n_epoch=1
+        callbacks=[metrics_logger, early_stop_callback],
     )
 
     # Init text classifier
