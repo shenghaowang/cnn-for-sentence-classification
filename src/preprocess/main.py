@@ -83,7 +83,7 @@ def main(cfg: DictConfig) -> None:
 
     # Split the merged data for training, validation, and test
     train_df, rest_df = train_test_split(
-        df, test_size=0.3, stratify=df[cols.label], random_state=42
+        df, test_size=0.2, stratify=df[cols.label], random_state=42
     )
     val_df, test_df = train_test_split(
         rest_df, test_size=0.5, stratify=rest_df[cols.label], random_state=42
