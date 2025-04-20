@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ from omegaconf import DictConfig
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset
 
-from preprocess.utils import Cols
+from preprocess.utils import Cols, load_vocab_with_freq
 
 
 class TextDataset(Dataset):
@@ -21,11 +21,15 @@ class TextDataset(Dataset):
     Reference: https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
     """
 
-    def __init__(self, data: List[Tuple[str, int]], word2vec: KeyedVectors):
+    def __init__(
+        self,
+        data: List[Tuple[str, int]],
+        word2vec: Dict[str, np.ndarray],
+        embedding_dim: int = 300,
+    ):
         self.dataset = data
         self.word2vec = word2vec
-        self.embedding_dim = word2vec.vector_size
-        # self.vectorizer = vectorizer
+        self.embedding_dim = embedding_dim
 
     def __len__(self):
         return len(self.dataset)
@@ -39,8 +43,10 @@ class TextDataset(Dataset):
         for word in tokens:
             if word in self.word2vec:
                 vec = torch.tensor(self.word2vec[word])
+
             else:
                 vec = torch.zeros(self.embedding_dim)
+
             vectors.append(vec)
 
         return {
@@ -89,7 +95,7 @@ class TextDataModule(pl.LightningDataModule):
 
         return data
 
-    def setup(self, word2vec_path: Path):
+    def setup(self, word2vec_path: Path, vocab_path: Path):
         train_data = self.load_data(self.processed_data_dir.train)
         val_data = self.load_data(self.processed_data_dir.val)
         test_data = self.load_data(self.processed_data_dir.test)
@@ -102,9 +108,15 @@ class TextDataModule(pl.LightningDataModule):
         word2vec = KeyedVectors.load_word2vec_format(word2vec_path, binary=True)
         # word2vec.init_sims(replace=True)
 
-        self.train_ds = TextDataset(train_data, word2vec)
-        self.val_ds = TextDataset(val_data, word2vec)
-        self.test_ds = TextDataset(test_data, word2vec)
+        # Add random vectors for unseen words
+        embedding_dim = word2vec.vector_size
+        vocab = load_vocab_with_freq(vocab_path)
+        word2vec = build_extended_vectors(word2vec, vocab, embedding_dim)
+
+        # Init datasets
+        self.train_ds = TextDataset(train_data, word2vec, embedding_dim)
+        self.val_ds = TextDataset(val_data, word2vec, embedding_dim)
+        self.test_ds = TextDataset(test_data, word2vec, embedding_dim)
 
     def collate_fn(self, batch):
         """Convert the input raw data from the dataset into model input"""
@@ -154,3 +166,58 @@ class TextDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             collate_fn=self.collate_fn,
         )
+
+
+def add_unknown_words(
+    word_vecs: KeyedVectors, vocab, min_df=1, k=300, seed=42
+) -> KeyedVectors:
+    """
+    Add random vectors for unseen words (i.e., words in `vocab` but not in `word_vecs`).
+
+    Parameters
+    ----------
+    word_vecs : dict-like
+        A dictionary (e.g., gensim KeyedVectors or Python dict) of known word -> vector (np.array).
+    vocab : dict
+        A dict mapping words to their document frequency or counts.
+    min_df : int
+        Minimum number of times a word must appear to be added to the vocab.
+    k : int
+        Dimensionality of the embedding vectors.
+    seed : int
+        Random seed for reproducibility.
+    """
+    np.random.seed(seed)
+    unseen = 0
+
+    for word in vocab:
+        if word not in word_vecs and vocab[word] >= min_df:
+            word_vecs[word] = np.random.uniform(-0.25, 0.25, k).astype(np.float32)
+            unseen += 1
+
+    logger.debug(f"Size of vocabulary: {len(word_vecs)}")
+    logger.debug(f"Added {unseen} unseen words to the vocab")
+
+    return word_vecs
+
+
+def build_extended_vectors(
+    word2vec, vocab, k=300, min_df=2, seed=42
+) -> Dict[str, np.ndarray]:
+    np.random.seed(seed)
+    extended = {}
+    unseen = 0
+
+    logger.debug(f"Size of vocabulary: {len(vocab)}")
+
+    for word in vocab:
+        if word in word2vec:
+            extended[word] = word2vec[word]
+
+        elif vocab[word] >= min_df:
+            extended[word] = np.random.uniform(-0.25, 0.25, k).astype(np.float32)
+            unseen += 1
+
+    logger.debug(f"Number of unknown words: {unseen}")
+
+    return extended
