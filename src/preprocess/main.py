@@ -71,6 +71,10 @@ def main(cfg: DictConfig) -> None:
         df[cols.processed_text].notna() & df[cols.processed_text].str.strip().ne("")
     ]
 
+    # Encode text labels as integers if necessary
+    if "label_mapping" in cfg.dataset:
+        df[cols.label] = df[cols.label].map(cfg.dataset.label_mapping)
+
     # Build vocabulary
     build_vocab(
         texts=df[cols.processed_text].to_list(),
