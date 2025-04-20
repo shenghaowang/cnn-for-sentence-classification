@@ -7,7 +7,7 @@ import torch
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.callbacks import EarlyStopping
-from torchsummary import summary
+from torchinfo import summary
 
 from data.text_data import TextDataModule
 from model.cnn import ConvNet
@@ -56,12 +56,8 @@ def main(cfg: DictConfig):
         raise ValueError(f"Unknown model type: {cfg.model.name}")
 
     # Examine model architecture
-    model_summary = summary(
-        model, input_size=(hyperparams.input_dim, train_cfg.max_seq_len)
-    )
     logger.info("Model summary:")
-    for line in str(model_summary).splitlines():
-        logger.info(line)
+    summary(model, input_size=(1, hyperparams.input_dim, train_cfg.max_seq_len))
 
     # Create trainer
     metrics_logger = MetricsLogger()
