@@ -41,20 +41,15 @@ class TextClassifier(pl.LightningModule):
             y = y.long()
             predictions = torch.argmax(logits, dim=1)
 
-        # print(f"logits: {logits.shape}")
-        # print(f"targets: {y.shape}")
         loss = self.loss_fn(logits, y)
 
-        # Set constraint on the model params of
-        # the last fully connected layer
-        # l2_lambda = 0.01
-        # fc_params = torch.cat([x.view(-1) for x in self.model.fc2.parameters()])
-        # total_loss = loss + l2_lambda * torch.norm(fc_params, 2)
-        total_loss = loss
+        # Apply L2 regularization
+        l2_lambda = 0.01
+        fc_params = torch.cat([x.view(-1) for x in self.model.fc.parameters()])
+        total_loss = loss + l2_lambda * torch.norm(fc_params, 2)
 
         # Compute accuracy
         acc = (predictions == y).float().mean()
-        # f1 = self.f1(predictions, batch["label"])
 
         return total_loss, acc
 
