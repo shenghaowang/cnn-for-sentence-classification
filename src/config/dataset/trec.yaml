@@ -1,6 +1,6 @@
 name: trec
 
-rm_stopwords: True
+lowercase: False
 raw:
   train: ${data_dir}/train.csv
   test: ${data_dir}/test.csv
@@ -15,6 +15,6 @@ type: text_label
 train:
   # max_seq_len: 110
   num_classes: 6
-  max_seq_len: 30
-  batch_size: 32
+  max_seq_len: 10
+  batch_size: 50
   word_vec_dim: 300
