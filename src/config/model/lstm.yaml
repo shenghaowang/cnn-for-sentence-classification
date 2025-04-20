@@ -1,1 +1,8 @@
 name: lstm
+
+hyperparams:
+  learning_rate: 0.001
+  max_epochs: 20
+  input_dim: 300
+  hidden_dim: 128
+  num_layers: 1
