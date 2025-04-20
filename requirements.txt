@@ -50,8 +50,8 @@ smart-open==7.1.0
 sympy==1.13.1
 threadpoolctl==3.6.0
 torch==2.6.0
+torchinfo==1.8.0
 torchmetrics==1.7.1
-torchsummary==1.5.1
 tqdm==4.67.1
 typing_extensions==4.13.2
 tzdata==2025.2
