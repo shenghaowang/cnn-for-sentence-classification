@@ -1,4 +1,3 @@
-import importlib
 from pathlib import Path
 
 import hydra
@@ -10,6 +9,8 @@ from sklearn.model_selection import train_test_split
 from preprocess.utils import (
     Cols,
     DataType,
+    build_vocab,
+    clean_text,
     read_pos_neg_data,
     read_text_label_data,
     write_processed_data,
@@ -22,7 +23,7 @@ def main(cfg: DictConfig) -> None:
 
     raw_data = cfg.dataset.raw
     processed_data = cfg.dataset.processed
-    rm_stops = cfg.dataset.rm_stopwords
+    lowercase = cfg.dataset.lowercase
     cols = Cols(**cfg.dataset.fields)
 
     # Read the raw data
@@ -51,15 +52,11 @@ def main(cfg: DictConfig) -> None:
             + f"{np.percentile(df[cols.seq_len].values, percentile)}"
         )
 
-    clean_text_func = getattr(
-        importlib.import_module("preprocess.utils"), cfg.clean_text_func
-    )
-
     # Preview text processing
     logger.debug("Preview the processed text:")
     for text in df[cols.raw_text][:5]:
         logger.debug(f"Original text: {text}")
-        logger.debug(f"Processed text: {clean_text_func(text, rm_stops)}")
+        logger.debug(f"Processed text: {clean_text(text, lowercase)}")
         logger.debug("\n")
 
     # Create directory for storing the processed data
@@ -67,16 +64,22 @@ def main(cfg: DictConfig) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Clean the text data
-    df[cols.processed_text] = df[cols.raw_text].apply(clean_text_func)
+    df[cols.processed_text] = df[cols.raw_text].apply(clean_text, lowercase=lowercase)
 
     # Filter out empty texts
     df = df[
         df[cols.processed_text].notna() & df[cols.processed_text].str.strip().ne("")
     ]
 
+    # Build vocabulary
+    build_vocab(
+        texts=df[cols.processed_text].to_list(),
+        vocab_path=processed_data.vocab,
+    )
+
     # Split the merged data for training, validation, and test
     train_df, rest_df = train_test_split(
-        df, test_size=0.3, stratify=df[cols.label], random_state=42
+        df, test_size=0.2, stratify=df[cols.label], random_state=42
     )
     val_df, test_df = train_test_split(
         rest_df, test_size=0.5, stratify=rest_df[cols.label], random_state=42
