@@ -1,0 +1,26 @@
+name: bbc
+
+lowercase: True
+raw:
+  full: "${data_dir}/bbc-text.csv"
+fields:
+  raw_text: text
+  processed_text: processed_text
+  seq_len: len
+  label: category
+
+type: text_label
+
+train:
+  num_classes: 5
+  # max_seq_len: 390
+  max_seq_len: 50
+  batch_size: 50
+  word_vec_dim: 300
+
+label_mapping:
+  business: 0
+  entertainment: 1
+  politics: 2
+  sport: 3
+  tech: 4
