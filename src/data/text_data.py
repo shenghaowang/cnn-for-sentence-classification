@@ -8,8 +8,6 @@ import torch
 from gensim.models import KeyedVectors
 from loguru import logger
 from omegaconf import DictConfig
-
-# from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset
 

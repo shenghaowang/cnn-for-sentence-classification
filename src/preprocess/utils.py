@@ -79,13 +79,13 @@ def clean_text(text: str, lowercase: bool = True) -> str:
     ----------
     text : str
         original text
-    rm_stops : bool, optional
-        if stopwords need to be removed, by default False
+    lowercase : bool, optional
+        whether to convert text to lowercase, by default True
 
     Returns
     -------
     str
-        processed text with only Chinese characters
+        processed text
     """
 
     text = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", text)
