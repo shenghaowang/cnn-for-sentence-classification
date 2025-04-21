@@ -56,7 +56,7 @@ The following datasets and the Google News word vectors need to be available in 
 
 ## Usage
 
-1. **Preprocess text data**
+### Preprocess text data
 
 ```bash
 export PYTHONPATH=src
@@ -65,11 +65,11 @@ python src/preprocess/main.py dataset=<dataset_name>
 
 Supported dataset names:
 
-* trec (Question classification)
-* mr (Movie review sentiment analysis)
-* bbc (News topic classification)
+* `trec`
+* `mr`
+* `bbc`
 
-2. **Train and evaluate KimCNN or Bidirectional LSTM model**
+### Train and evaluate KimCNN or Bidirectional LSTM model
 
 ```bash
 export PYTHONPATH=src
@@ -78,8 +78,8 @@ python src/train/main.py dataset=<dataset_name> model=<model_type>
 
 Supported model types:
 
-* cnn: KimCNN
-* lstm: Bidirectional LSTM
+* `cnn`: KimCNN
+* `lstm`: Bidirectional LSTM
 
 ## KimCNN model architecture
 
