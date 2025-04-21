@@ -7,6 +7,7 @@ import torchmetrics
 class TextClassifier(pl.LightningModule):
     def __init__(self, model, num_class: int, learning_rate: float, batch_size: int):
         super().__init__()
+        self.save_hyperparameters()
 
         self.model = model
         self.learning_rate = learning_rate
