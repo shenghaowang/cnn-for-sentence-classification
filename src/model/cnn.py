@@ -35,13 +35,11 @@ class ConvNet(torch.nn.Module):
         x: Tensor of shape (batch_size, sequence_length, embedding_dim)
         """
 
-        # Apply each convolution → ReLU → max-over-time pooling
-        conved = [F.relu(conv(x)) for conv in self.convs]  # [(B, F, L_out), ...]
-        pooled = [
-            F.max_pool1d(c, kernel_size=c.shape[2]).squeeze(2) for c in conved
-        ]  # [(B, F), ...]
+        # Conv -> ReLU -> Max-over-time Pooling
+        conved = [F.relu(conv(x)) for conv in self.convs]
+        pooled = [F.max_pool1d(c, kernel_size=c.shape[2]).squeeze(2) for c in conved]
 
-        cat = torch.cat(pooled, dim=1)  # (batch_size, F * len(kernel_sizes))
+        cat = torch.cat(pooled, dim=1)
 
         dropped = self.dropout(cat)
         logits = self.fc(dropped)

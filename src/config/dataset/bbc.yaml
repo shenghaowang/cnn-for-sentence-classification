@@ -13,8 +13,8 @@ type: text_label
 
 train:
   num_classes: 5
-  # max_seq_len: 390
-  max_seq_len: 50
+  max_seq_len: 390
+  # max_seq_len: 50
   batch_size: 50
   word_vec_dim: 300
 

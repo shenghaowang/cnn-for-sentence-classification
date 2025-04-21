@@ -4,6 +4,7 @@ model/
 !src/model
 lightning_logs/
 data/**/processed_*.csv
+data/**/vocab.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

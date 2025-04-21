@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 import hydra
@@ -5,7 +6,8 @@ import pytorch_lightning as pl
 import torch
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
-from pytorch_lightning.callbacks import EarlyStopping
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from torchinfo import summary
 
 from data.text_data import TextDataModule
 from model.cnn import ConvNet
@@ -38,7 +40,7 @@ def main(cfg: DictConfig):
         model = ConvNet(
             num_filters=hyperparams.num_filters,
             kernel_sizes=hyperparams.kernel_sizes,
-            embedding_dim=hyperparams.embedding_dim,
+            embedding_dim=hyperparams.input_dim,
             output_dim=train_cfg.num_classes if train_cfg.num_classes > 2 else 1,
         )
 
@@ -53,14 +55,26 @@ def main(cfg: DictConfig):
     else:
         raise ValueError(f"Unknown model type: {cfg.model.name}")
 
+    # Examine model architecture
+    logger.info("Model summary:")
+    summary(model, input_size=(1, hyperparams.input_dim, train_cfg.max_seq_len))
+
     # Create trainer
     metrics_logger = MetricsLogger()
     early_stop_callback = EarlyStopping(
         monitor="val_loss", min_delta=0.001, patience=3, verbose=True, mode="min"
     )
+    checkpoint_callback = ModelCheckpoint(
+        monitor="val_loss",  # same metric as EarlyStopping
+        mode="min",
+        save_top_k=1,  # keep only the best model
+        filename="best-checkpoint",
+        save_weights_only=False,  # save full model (or True for just weights)
+    )
+
     trainer = pl.Trainer(
         max_epochs=cfg.model.hyperparams.max_epochs,
-        callbacks=[metrics_logger, early_stop_callback],
+        callbacks=[metrics_logger, early_stop_callback, checkpoint_callback],
     )
 
     # Init text classifier
@@ -72,13 +86,20 @@ def main(cfg: DictConfig):
     )
 
     # Train and validate the model
+    logger.info("Training the model...")
+    start_time = time.time()
     trainer.fit(
         classifier,
         train_dataloaders=dm.train_dataloader(),
         val_dataloaders=dm.val_dataloader(),
     )
+    end_time = time.time()
+    logger.info(f"Training time: {(end_time - start_time):.2f} seconds")
 
-    # Test the model
+    # Load the best model and test the performance
+    classifier = TextClassifier.load_from_checkpoint(
+        checkpoint_callback.best_model_path
+    )
     trainer.test(classifier, dm.test_dataloader())
 
     # Predict on the same test set to show some output

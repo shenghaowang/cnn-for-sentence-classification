@@ -9,4 +9,4 @@ pytorch-lightning
 pre-commit
 pytest
 scikit-learn
-torchsummary
+torchinfo

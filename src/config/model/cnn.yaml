@@ -10,4 +10,4 @@ hyperparams:
     - 4
     - 5
   dropout: 0.5
-  embedding_dim: 300
+  input_dim: 300

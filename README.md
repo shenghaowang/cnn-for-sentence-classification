@@ -1,64 +1,115 @@
-# chinese-offensive-lang-detection-with-cnn
-Pytorch implementation of the CNN for Chinese offensive language detection
+# 📚 CNN for Sentence Classification
 
-## Setup
-Python >3.8 is required.
+This repository contains PyTorch Lightning implementations of KimCNN models for benchmarking text classification tasks. The CNN model is based on [Kim (2014)](https://arxiv.org/abs/1408.5882).
 
-### Create virtual environment
+---
+
+## 🚀 Features
+
+- ✅ KimCNN and BiLSTM implementations using PyTorch Lightning
+- ✅ Pretrained word embeddings (Google News word2vec)
+- ✅ Experiments on benchmark datasets: TREC, MR, BBC News
+- ✅ Stratified data splitting and reproducible evaluation
+- ✅ Early stopping, checkpointing, and runtime logging
+
+---
+
+## 📦 Installation
+
+While Docker is the recommended method for setting up the environment, the following steps provide a quick alternative using a Python virtual environment:
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/your-username/text-classification-cnn-lstm.git
+cd text-classification-cnn-lstm
 ```
-virtualenv coldcnn_env
-source coldcnn_env/bin/activate
+
+2. **Create a virtual environment**
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. **Install dependencies**
+```bash
 pip install -r requirements.txt
-python -m spacy download zh_core_web_md
 ```
 
-### Install the `pre-commit` hooks
-```
+4. **Install the `pre-commit` hooks**
+```bash
 pre-commit install
 pre-commit run --all-files
 ```
 
-## Preprocess
-To remove the stopwords from the text messages, a filter can be applied over the [CJK Unified Ideographs](https://unicode-table.com/en/blocks/cjk-unified-ideographs/). CJK stands for Chinese, Japanese and Korean. Code ranges related to CJK include the follows.
+---
+
+## 📂 Datasets
+
+The following datasets and the Google News word vectors need to be available in the [data](data/) folder.
+
+* [TREC](https://cogcomp.seas.upenn.edu/Data/QA/QC/): Question classification by topic (e.g., person, location) (Li & Roth, 2002).
+* [MR](https://www.cs.cornell.edu/people/pabo/movie-review-data/): Single-sentence movie reviews (Pang & Lee, 2005).
+* [BBC News](https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv): News article classification by topic (business, entertainment, politics, sport, tech) (Greene & Cunningham, 2005).
+* [Google News word vectors](https://www.kaggle.com/datasets/leadbest/googlenewsvectorsnegative300)(Mikolov et al., 2013)
+
+---
+
+## Usage
+
+### Preprocess text data
+
+```bash
+export PYTHONPATH=src
+python src/preprocess/main.py dataset=<dataset_name>
+```
+
+Supported dataset names:
+
+* `trec`
+* `mr`
+* `bbc`
+
+### Train and evaluate KimCNN or Bidirectional LSTM model
+
+```bash
+export PYTHONPATH=src
+python src/train/main.py dataset=<dataset_name> model=<model_type>
+```
+
+Supported model types:
+
+* `cnn`: KimCNN
+* `lstm`: Bidirectional LSTM
+
+## KimCNN model architecture
+
+An example architecture of the KimCNN model based on the TREC dataset is as follows.
 
 ```
-31C0—31EF CJK Strokes
-31F0—31FF Katakana Phonetic Extensions
-3200—32FF Enclosed CJK Letters and Months
-3300—33FF CJK Compatibility
-3400—4DBF CJK Unified Ideographs Extension A
-4DC0—4DFF Yijing Hexagram Symbols
-4E00—9FFF CJK Unified Ideographs
-```
-
-## Model architecture
-
-```
-----------------------------------------------------------------
-        Layer (type)               Output Shape         Param #
-================================================================
-            Conv1d-1              [-1, 16, 108]          14,416
-              ReLU-2              [-1, 16, 108]               0
-         MaxPool1d-3               [-1, 16, 53]               0
-            Conv1d-4              [-1, 16, 107]          19,216
-              ReLU-5              [-1, 16, 107]               0
-         MaxPool1d-6               [-1, 16, 52]               0
-            Conv1d-7              [-1, 16, 106]          24,016
-              ReLU-8              [-1, 16, 106]               0
-         MaxPool1d-9               [-1, 16, 51]               0
-          Flatten-10                 [-1, 2496]               0
-          Dropout-11                 [-1, 2496]               0
-           Linear-12                  [-1, 128]         319,616
-          Dropout-13                  [-1, 128]               0
-           Linear-14                    [-1, 1]             129
-          Sigmoid-15                    [-1, 1]               0
-================================================================
-Total params: 377,393
-Trainable params: 377,393
+==========================================================================================
+Layer (type:depth-idx)                   Output Shape              Param #
+==========================================================================================
+ConvNet                                  [1, 6]                    --
+├─ModuleList: 1-1                        --                        --
+│    └─Conv1d: 2-1                       [1, 100, 8]               90,100
+│    └─Conv1d: 2-2                       [1, 100, 7]               120,100
+│    └─Conv1d: 2-3                       [1, 100, 6]               150,100
+├─Dropout: 1-2                           [1, 300]                  --
+├─Linear: 1-3                            [1, 6]                    1,806
+==========================================================================================
+Total params: 362,106
+Trainable params: 362,106
 Non-trainable params: 0
-----------------------------------------------------------------
+Total mult-adds (Units.MEGABYTES): 2.46
+==========================================================================================
 ```
+
+---
 
 ## References
-* [COLD: A Benchmark for Chinese Offensive Language Detection](https://arxiv.org/abs/2201.06025)
-* [Find all Chinese text in a string using Python and Regex](https://stackoverflow.com/questions/2718196/find-all-chinese-text-in-a-string-using-python-and-regex)
+
+* Kim, Y. (2014). Convolutional neural networks for sentence classification. arXiv. https://arxiv.org/abs/1408.5882
+* Mikolov, T., Chen, K., Corrado, G., & Dean, J. (2013). Efficient estimation of word representations in vector space (arXiv preprint arXiv:1301.3781). https://arxiv.org/abs/1301.3781
+* Pang, B., & Lee, L. (2005). Seeing stars: Exploiting class relationships for sentiment categorization with respect to rating scales. In Proceedings of ACL 2005.
+* Li, X., & Roth, D. (2002). Learning Question Classifiers. In Proceedings of ACL 2002. https://dl.acm.org/doi/10.3115/1072228.1072378
+* Greene, D., & Cunningham, P. (2005). Producing accurate interpretable clusters from high-dimensional data (Technical Report TCD-CS-2005-42). Department of Computer Science, Trinity College Dublin.
